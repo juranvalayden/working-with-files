@@ -4,15 +4,8 @@ using WorkingWithFiles.Domain.Common;
 
 namespace WorkingWithFiles.Infrastructure.Repositories;
 
-public class SampleFileService : ISampleFileService
+public class SampleFileService(ISalesOrderFactory salesOrderFactory) : ISampleFileService
 {
-    private readonly ISalesOrderFactory _salesOrderFactory;
-
-    public SampleFileService(ISalesOrderFactory salesOrderFactory)
-    {
-        _salesOrderFactory = salesOrderFactory ?? throw new ArgumentNullException(nameof(salesOrderFactory));
-    }
-
     public long GetRandomLong() => Random.Shared.NextInt64(Constants.MinRecords, Constants.MaxRecords + 1);
 
     /// <summary>
@@ -56,7 +49,7 @@ public class SampleFileService : ISampleFileService
                 Parallel.For(0, currentChunk, po, i =>
                 {
                     // Factory must be thread-safe (ThreadLocal Faker + Interlocked id)
-                    var dto = _salesOrderFactory.CreateFakeDto();
+                    var dto = salesOrderFactory.CreateFakeDto();
                     lines[i] = dto.ToString();
                     Interlocked.Increment(ref produced);
                 });
