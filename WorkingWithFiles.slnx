@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/1 - Presentation/">
+    <Project Path="src/WorkingWithFiles/WorkingWithFiles.csproj" />
+  </Folder>
+  <Folder Name="/src/2 - Application/">
+    <Project Path="WorkingWithFiles.Application/WorkingWithFiles.Application.csproj" Id="f50a5f86-e69c-4de7-9657-676d8532e875" />
+  </Folder>
+  <Folder Name="/src/3 - Infrastructure/">
+    <Project Path="src/WorkingWithFiles.Infrastructure/WorkingWithFiles.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/src/4 - Domain/">
+    <Project Path="src/WorkingWithFiles.Domain/WorkingWithFiles.Domain.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/WorkingWithFiles.Tests/WorkingWithFiles.Tests.csproj" />
+  </Folder>
+</Solution>

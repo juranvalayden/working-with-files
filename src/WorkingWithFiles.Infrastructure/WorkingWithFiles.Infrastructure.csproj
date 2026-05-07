@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Bogus" Version="35.6.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\WorkingWithFiles.Application\WorkingWithFiles.Application.csproj" />
+    <ProjectReference Include="..\WorkingWithFiles.Domain\WorkingWithFiles.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
