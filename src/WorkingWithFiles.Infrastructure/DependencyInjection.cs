@@ -8,6 +8,9 @@ public static class DependencyInjection
 {
     public static void AddInfrastructure(this IServiceCollection services)
     {
-        services.AddScoped<ISalesOrderFactory, SalesOrderFactory>();
+        services.AddScoped<ISampleFileService, SampleFileService>();
+        services.AddSingleton<ISalesOrderFactory, SalesOrderFactory>();
+
+
     }
 }

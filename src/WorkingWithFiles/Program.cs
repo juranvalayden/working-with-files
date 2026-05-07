@@ -11,9 +11,11 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var salesOrderFactory = scope.ServiceProvider.GetRequiredService<ISalesOrderFactory>();
-    var fakeSalesOrderDto = salesOrderFactory.CreateFakeDto();
-}
+    var sampleFileService = scope.ServiceProvider.GetRequiredService<ISampleFileService>();
 
+    var numberOfRecords = sampleFileService.GetRandomLong();
+
+    await sampleFileService.CreateSampleCsvFileAsync(numberOfRecords);
+}
 
 await app.RunAsync();
