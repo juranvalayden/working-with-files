@@ -1,4 +1,6 @@
 ﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
+using System.Text;
 using WorkingWithFiles.Application.Interfaces;
 using WorkingWithFiles.Domain.Common;
 
@@ -79,17 +81,62 @@ public class SampleFileService(ISalesOrderFactory salesOrderFactory) : ISampleFi
         }
     }
 
-    public async Task<string[]> ReadSampleCsvAsync()
+    public async IAsyncEnumerable<string> ReadSampleCsvLinesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var path = Path.Combine(Constants.Directory, Constants.FileName);
+        if (!File.Exists(path)) yield break;
+
+        const int bufferSize = 64 * 1024; // 64 KB, tune if needed
+        await using var fs = new FileStream(
+            path,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.ReadWrite, // allow writer to append while reading
+            bufferSize,
+            useAsync: true);
+
+        using var sr = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: bufferSize);
+
+        while (await sr.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return line;
+        }
+    }
+
+    public async Task<int> ReadSampleCsvAsync(CancellationToken cancellationToken = default)
     {
         var filePathAndFileName = Path.Combine(Constants.Directory, Constants.FileName);
 
         if (!File.Exists(filePathAndFileName))
         {
-            return Array.Empty<string>();
+            return 0;
         }
 
-        return await File.ReadAllLinesAsync(filePathAndFileName).ConfigureAwait(false);
+        var lineCount = 0;
+        var skipHeader = true; // set to true to skip the first line (header)
+
+        await foreach (var line in ReadSampleCsvLinesAsync(cancellationToken).WithCancellation(cancellationToken))
+        {
+            if (skipHeader)
+            {
+                skipHeader = false;
+                continue; // skip the header line
+            }
+
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            // simple CSV split (no 3rd-party parser)
+            var parts = line.Split(',');
+
+            // process parts as needed...
+            ++lineCount;
+        }
+
+        return lineCount;
     }
+
 
     private async Task<string> DirectoryFileCheckerAsync(bool shouldCreateNewFile, CancellationToken cancellationToken = default)
     {

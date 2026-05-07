@@ -13,9 +13,11 @@ using (var scope = app.Services.CreateScope())
 {
     var sampleFileService = scope.ServiceProvider.GetRequiredService<ISampleFileService>();
 
-    var numberOfRecords = sampleFileService.GetRandomLong();
+    // var numberOfRecords = sampleFileService.GetRandomLong();
+    // await sampleFileService.CreateSampleCsvFileAsync(numberOfRecords);
 
-    await sampleFileService.CreateSampleCsvFileAsync(numberOfRecords);
+
+    var lineCount = await sampleFileService.ReadSampleCsvAsync();
 }
 
 await app.RunAsync();
