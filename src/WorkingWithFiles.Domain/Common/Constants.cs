@@ -2,7 +2,8 @@
 
 public static class Constants
 {
-    public const int BatchSize = 2500;
+    public const int BatchSize = 1750;
+    public const int BulkCopyBatchSize = 10000;
     public const int BufferSize = 64 * 1024;
     public const long MinRecords = 1_000_000;
     public const long MaxRecords = 4_000_000;

@@ -15,7 +15,9 @@ using (var scope = app.Services.CreateScope())
     // var numberOfRecords = sampleFileService.GetRandomLong();
     // await sampleFileService.CreateSampleCsvFileAsync(numberOfRecords);
 
-    var hasProcessedLines = await sampleFileService.ProcessLinesAsync();
+    // var hasProcessedLines = await sampleFileService.ProcessLinesAsync();
+
+    var hasProcessedLines = await sampleFileService.ProcessLinesWithReportingAsync();
 
     Console.WriteLine($"Has processed all lines `{hasProcessedLines}`.");
 }

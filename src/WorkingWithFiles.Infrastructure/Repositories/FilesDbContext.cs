@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WorkingWithFiles.Application.Dtos;
 using WorkingWithFiles.Domain.Entities;
 
 namespace WorkingWithFiles.Infrastructure.Repositories;
@@ -7,6 +6,7 @@ namespace WorkingWithFiles.Infrastructure.Repositories;
 public class FilesDbContext(DbContextOptions<FilesDbContext> options) : DbContext(options)
 {
     public DbSet<SalesOrder> SalesOrders { get; set; } 
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
