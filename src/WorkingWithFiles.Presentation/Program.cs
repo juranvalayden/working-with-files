@@ -16,8 +16,9 @@ using (var scope = app.Services.CreateScope())
     // var numberOfRecords = sampleFileService.GetRandomLong();
     // await sampleFileService.CreateSampleCsvFileAsync(numberOfRecords);
 
-
     var lineCount = await sampleFileService.ReadSampleCsvAsync();
+
+    Console.WriteLine($"Number of lines read = `{lineCount}`.");
 }
 
 await app.RunAsync();

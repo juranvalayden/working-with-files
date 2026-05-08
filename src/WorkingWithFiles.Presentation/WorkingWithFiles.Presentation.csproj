@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WorkingWithFiles.Application\WorkingWithFiles.Application.csproj" />
+    <ProjectReference Include="..\WorkingWithFiles.Application\WorkingWithFiles.Application.csproj" />
     <ProjectReference Include="..\WorkingWithFiles.Infrastructure\WorkingWithFiles.Infrastructure.csproj" />
   </ItemGroup>
 
