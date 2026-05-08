@@ -12,13 +12,12 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var sampleFileService = scope.ServiceProvider.GetRequiredService<ISampleFileService>();
-
     // var numberOfRecords = sampleFileService.GetRandomLong();
     // await sampleFileService.CreateSampleCsvFileAsync(numberOfRecords);
 
-    var lineCount = await sampleFileService.ReadSampleCsvAsync();
+    var hasProcessedLines = await sampleFileService.ProcessLinesAsync();
 
-    Console.WriteLine($"Number of lines read = `{lineCount}`.");
+    Console.WriteLine($"Has processed all lines `{hasProcessedLines}`.");
 }
 
 await app.RunAsync();

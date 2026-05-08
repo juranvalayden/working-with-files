@@ -4,16 +4,12 @@ using System.Text;
 using WorkingWithFiles.Application.Interfaces;
 using WorkingWithFiles.Domain.Common;
 
-namespace WorkingWithFiles.Infrastructure.Repositories;
+namespace WorkingWithFiles.Infrastructure.Services;
 
-public class SampleFileService(ISalesOrderFactory salesOrderFactory) : ISampleFileService
+public class SampleFileService(ISalesOrderFactory salesOrderFactory, IMapper mapper) : ISampleFileService
 {
     public long GetRandomLong() => Random.Shared.NextInt64(Constants.MinRecords, Constants.MaxRecords + 1);
 
-    /// <summary>
-    /// Create a CSV file with generated records. The method is chunked to bound memory usage,
-    /// generates records in parallel within each chunk, and writes each chunk as a single payload.
-    /// </summary>
     public async Task CreateSampleCsvFileAsync(long numberOfRecords, bool shouldCreateNewFile = true, CancellationToken cancellationToken = default)
     {
         if (numberOfRecords <= 0) numberOfRecords = 10;
@@ -81,62 +77,91 @@ public class SampleFileService(ISalesOrderFactory salesOrderFactory) : ISampleFi
         }
     }
 
-    public async IAsyncEnumerable<string> ReadSampleCsvLinesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
-    {
-        var path = Path.Combine(Constants.Directory, Constants.FileName);
-        if (!File.Exists(path)) yield break;
-
-        const int bufferSize = 64 * 1024; // 64 KB, tune if needed
-        await using var fs = new FileStream(
-            path,
-            FileMode.Open,
-            FileAccess.Read,
-            FileShare.ReadWrite, // allow writer to append while reading
-            bufferSize,
-            useAsync: true);
-
-        using var sr = new StreamReader(fs, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: bufferSize);
-
-        while (await sr.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            yield return line;
-        }
-    }
-
-    public async Task<int> ReadSampleCsvAsync(CancellationToken cancellationToken = default)
+    public async Task<bool> ProcessLinesAsync(CancellationToken cancellationToken = default)
     {
         var filePathAndFileName = Path.Combine(Constants.Directory, Constants.FileName);
 
-        if (!File.Exists(filePathAndFileName))
-        {
-            return 0;
-        }
+        if (!File.Exists(filePathAndFileName)) return false;
 
         var lineCount = 0;
-        var skipHeader = true; // set to true to skip the first line (header)
+        var skipHeader = true;
 
-        await foreach (var line in ReadSampleCsvLinesAsync(cancellationToken).WithCancellation(cancellationToken))
+        await foreach (var line in StreamCsvLinesAsync(filePathAndFileName, cancellationToken))
         {
             if (skipHeader)
             {
                 skipHeader = false;
-                continue; // skip the header line
+                continue;
             }
 
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+            if (string.IsNullOrWhiteSpace(line)) continue;
 
-            // simple CSV split (no 3rd-party parser)
             var parts = line.Split(',');
 
-            // process parts as needed...
+            var mapped = mapper.MapLine(parts);
+
             ++lineCount;
         }
 
-        return lineCount;
+        return lineCount > 0;
     }
 
+    private static async IAsyncEnumerable<string> StreamCsvLinesAsync(string path, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var fileStreamOptions = CreateFileStreamOptions();
+        
+        await using var inputFileStream = new FileStream(path, fileStreamOptions);
+        
+        using var inputFileStreamReader = new StreamReader(
+            stream: inputFileStream, 
+            encoding: Encoding.UTF8, 
+            detectEncodingFromByteOrderMarks: true, 
+            bufferSize: Constants.BufferSize, 
+            leaveOpen: false);
+
+        while (true)
+        {
+            if (cancellationToken.IsCancellationRequested) yield break;
+
+            var line = await inputFileStreamReader
+                .ReadLineAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            if (line is null) yield break;
+
+            yield return line;
+        }
+    }
+
+    private static FileStreamOptions CreateFileStreamOptions()
+    {
+        return new FileStreamOptions
+        {
+            Mode = FileMode.Open,
+            Access = FileAccess.Read,
+            Share = FileShare.ReadWrite,
+            BufferSize = Constants.BufferSize,
+            Options = FileOptions.Asynchronous | FileOptions.SequentialScan
+        };
+    }
+
+    private static Task StartProgressReporterAsync(long total, Func<long> readProduced, Stopwatch stopwatch, CancellationToken token)
+    {
+        return Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5), token).ConfigureAwait(false);
+                    var produced = readProduced();
+                    var percent = (int)(produced * 100 / Math.Max(1, total));
+                    Console.WriteLine($@"Progress: {percent,3}%  Records: {produced:N0}/{total:N0}  Elapsed: {stopwatch.Elapsed:hh\:mm\:ss}");
+                }
+            }
+            catch (OperationCanceledException) { /* expected on shutdown */ }
+        }, token);
+    }
 
     private async Task<string> DirectoryFileCheckerAsync(bool shouldCreateNewFile, CancellationToken cancellationToken = default)
     {
@@ -159,23 +184,5 @@ public class SampleFileService(ISalesOrderFactory salesOrderFactory) : ISampleFi
         }
 
         return filePathAndFileName;
-    }
-
-    private static Task StartProgressReporterAsync(long total, Func<long> readProduced, Stopwatch stopwatch, CancellationToken token)
-    {
-        return Task.Run(async () =>
-        {
-            try
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5), token).ConfigureAwait(false);
-                    var produced = readProduced();
-                    var percent = (int)(produced * 100 / Math.Max(1, total));
-                    Console.WriteLine($@"Progress: {percent,3}%  Records: {produced:N0}/{total:N0}  Elapsed: {stopwatch.Elapsed:hh\:mm\:ss}");
-                }
-            }
-            catch (OperationCanceledException) { /* expected on shutdown */ }
-        }, token);
     }
 }

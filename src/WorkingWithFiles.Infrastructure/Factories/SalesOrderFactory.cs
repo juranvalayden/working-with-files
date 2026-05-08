@@ -2,7 +2,7 @@
 using WorkingWithFiles.Application.Dtos;
 using WorkingWithFiles.Application.Interfaces;
 
-namespace WorkingWithFiles.Infrastructure.Repositories;
+namespace WorkingWithFiles.Infrastructure.Factories;
 
 public class SalesOrderFactory : ISalesOrderFactory
 {
