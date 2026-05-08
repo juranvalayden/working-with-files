@@ -6,7 +6,7 @@ using WorkingWithFiles.Domain.Common;
 
 namespace WorkingWithFiles.Infrastructure.Services;
 
-public class SampleFileService(ISalesOrderFactory salesOrderFactory, IMapper mapper) : ISampleFileService
+public class SampleFileService(ISalesOrderRepository salesOrderRepository, ISalesOrderFactory salesOrderFactory, IMapper mapper) : ISampleFileService
 {
     public long GetRandomLong() => Random.Shared.NextInt64(Constants.MinRecords, Constants.MaxRecords + 1);
 
@@ -85,6 +85,7 @@ public class SampleFileService(ISalesOrderFactory salesOrderFactory, IMapper map
 
         var lineCount = 0;
         var skipHeader = true;
+        var hasInserted = false;
 
         await foreach (var line in StreamCsvLinesAsync(filePathAndFileName, cancellationToken))
         {
@@ -98,25 +99,32 @@ public class SampleFileService(ISalesOrderFactory salesOrderFactory, IMapper map
 
             var parts = line.Split(',');
 
-            var mapped = mapper.MapLine(parts);
+            var salesOrder = mapper.MapDtoToEntity(parts);
+
+            // insert mapped into db
+            hasInserted = await salesOrderRepository.InsertSalesOrderAsync(salesOrder, cancellationToken);
+
+            if (!hasInserted) break;
+
+            hasInserted = true;
 
             ++lineCount;
         }
 
-        return lineCount > 0;
+        return lineCount > 0 && hasInserted;
     }
 
     private static async IAsyncEnumerable<string> StreamCsvLinesAsync(string path, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var fileStreamOptions = CreateFileStreamOptions();
-        
+
         await using var inputFileStream = new FileStream(path, fileStreamOptions);
-        
+
         using var inputFileStreamReader = new StreamReader(
-            stream: inputFileStream, 
-            encoding: Encoding.UTF8, 
-            detectEncodingFromByteOrderMarks: true, 
-            bufferSize: Constants.BufferSize, 
+            stream: inputFileStream,
+            encoding: Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true,
+            bufferSize: Constants.BufferSize,
             leaveOpen: false);
 
         while (true)

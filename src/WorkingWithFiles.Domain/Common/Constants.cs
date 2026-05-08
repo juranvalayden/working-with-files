@@ -12,4 +12,20 @@ public static class Constants
     public static readonly string Directory = Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, @"..\..\..\..\..")), _folderName);
     public const string Header = "Id,RevisionNumber,OrderDate,DueDate,Status,OnlineOrderFlag,SalesOrderNumber,ShipMethod,SubTotal,TaxAmt,Freight,TotalDue,RowGuid,ModifiedDate,ShipDate,PurchaseOrderNumber,AccountNumber,CreditCardApprovalCode,Comment";
     public const string HardCodedPath = @"C:\Code\WorkingWithFiles\solution items\sample files\sample-sales.csv";
+
+    public const string InsertRawSql = @"INSERT INTO SalesOrders
+(
+    RevisionNumber, OrderDate, DueDate, Status, OnlineOrderFlag,
+    SalesOrderNumber, ShipMethod, SubTotal, TaxAmt, Freight, TotalDue,
+    RowGuid, ModifiedDate, ShipDate, PurchaseOrderNumber, AccountNumber,
+    CreditCardApprovalCode, Comment
+)
+VALUES
+(
+    @RevisionNumber, @OrderDate, @DueDate, @Status, @OnlineOrderFlag,
+    @SalesOrderNumber, @ShipMethod, @SubTotal, @TaxAmt, @Freight, @TotalDue,
+    @RowGuid, @ModifiedDate, @ShipDate, @PurchaseOrderNumber, @AccountNumber,
+    @CreditCardApprovalCode, @Comment
+);
+";
 }

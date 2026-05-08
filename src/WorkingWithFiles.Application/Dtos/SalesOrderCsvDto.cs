@@ -2,7 +2,6 @@
 
 public record SalesOrderCsvDto
 {
-    public int Id { get; init; }
     public byte RevisionNumber { get; init; }
     public DateTime OrderDate { get; init; }
     public DateTime DueDate { get; init; }
@@ -26,7 +25,6 @@ public record SalesOrderCsvDto
     public override string ToString()
     {
         return string.Join(",",
-            Id,
             RevisionNumber,
             OrderDate.ToString("yyyy-MM-dd"),
             DueDate.ToString("yyyy-MM-dd"),
